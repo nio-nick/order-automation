@@ -60,7 +60,7 @@
             margin-bottom: 0.5rem;
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 0.625rem;
             border: 1px solid var(--border);
@@ -68,9 +68,10 @@
             box-sizing: border-box;
             font-size: 1rem;
             transition: border-color 0.2s;
+            background-color: white;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
@@ -134,12 +135,13 @@
             <input type="text" id="address" name="address" required placeholder="123 Main St, City, Country">
         </div>
         <div class="form-group">
-            <label for="product_name">Product Name</label>
-            <input type="text" id="product_name" name="product_name" required placeholder="Wireless Headphones">
-        </div>
-        <div class="form-group">
-            <label for="price">Price ($)</label>
-            <input type="number" id="price" name="price" step="0.01" required placeholder="99.99">
+            <label for="product">Select Product</label>
+            <select id="product" name="product" required>
+                <option value="" disabled selected>Choose a product</option>
+                <option value="Product A|1000">Product A - 1000 BDT</option>
+                <option value="Product B|2000">Product B - 2000 BDT</option>
+                <option value="Product C|3000">Product C - 3000 BDT</option>
+            </select>
         </div>
         <button type="submit">Submit Order</button>
     </form>
@@ -154,12 +156,15 @@
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        const productValue = document.getElementById('product').value;
+        const [product_name, price] = productValue.split('|');
+
         const formData = {
             customer_name: document.getElementById('customer_name').value,
             phone: document.getElementById('phone').value,
             address: document.getElementById('address').value,
-            product_name: document.getElementById('product_name').value,
-            price: document.getElementById('price').value,
+            product_name: product_name,
+            price: price,
         };
 
         try {
