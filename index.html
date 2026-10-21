@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Place Your Order</title>
+    <title>অর্ডার করুন</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -16,7 +16,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -118,32 +118,32 @@
 <body>
 
 <div class="container">
-    <h1>Place Your Order</h1>
-    <p class="subtitle">Fill out the form below to get started</p>
+    <h1>অর্ডার করুন</h1>
+    <p class="subtitle">অর্ডার করতে নিচের ফর্মটি পূরণ করুন</p>
 
     <form id="orderForm">
         <div class="form-group">
-            <label for="customer_name">Full Name</label>
-            <input type="text" id="customer_name" name="customer_name" required placeholder="John Doe">
+            <label for="customer_name">আপনার নাম</label>
+            <input type="text" id="customer_name" name="customer_name" required placeholder="আপনার পূর্ণ নাম লিখুন">
         </div>
         <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" name="phone" required placeholder="+1 234 567 890">
+            <label for="phone">মোবাইল নম্বর</label>
+            <input type="tel" id="phone" name="phone" required placeholder="০১৭xxxxxxxx">
         </div>
         <div class="form-group">
-            <label for="address">Delivery Address</label>
-            <input type="text" id="address" name="address" required placeholder="123 Main St, City, Country">
+            <label for="address">পূর্ণাঙ্গ ঠিকানা</label>
+            <input type="text" id="address" name="address" required placeholder="গ্রাম/রাস্তা, থানা, জেলা">
         </div>
         <div class="form-group">
-            <label for="product">Select Product</label>
+            <label for="product">প্রোডাক্ট সিলেক্ট করুন</label>
             <select id="product" name="product" required>
-                <option value="" disabled selected>Choose a product</option>
-                <option value="Product A|1000">Product A - 1000 BDT</option>
-                <option value="Product B|2000">Product B - 2000 BDT</option>
-                <option value="Product C|3000">Product C - 3000 BDT</option>
+                <option value="" disabled selected>একটি প্রোডাক্ট বেছে নিন</option>
+                <option value="Product A|1000">Product A - ৳ ১০০০ BDT</option>
+                <option value="Product B|2000">Product B - ৳ ২০০০ BDT</option>
+                <option value="Product C|3000">Product C - ৳ ৩০০০ BDT</option>
             </select>
         </div>
-        <button type="submit">Submit Order</button>
+        <button type="submit">অর্ডার নিশ্চিত করুন</button>
     </form>
 
     <div id="message"></div>
@@ -177,16 +177,16 @@
             const result = await response.json();
 
             if (result.success) {
-                messageDiv.textContent = result.message;
+                messageDiv.textContent = 'আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!';
                 messageDiv.className = 'success';
                 form.reset();
             } else {
-                messageDiv.textContent = result.message || 'An error occurred.';
+                messageDiv.textContent = result.message || 'একটি সমস্যা occurred।';
                 messageDiv.className = 'error';
             }
         } catch (error) {
-            messageDiv.textContent = 'Could not connect to the server.';
-            messageDiv.className = 'error';
+            messageDiv.textContent = 'সার্ভারের সাথে সংযোগ করা যাচ্ছে না।';
+                messageDiv.className = 'error';
         }
     });
 </script>
