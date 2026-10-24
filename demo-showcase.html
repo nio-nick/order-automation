@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderAutomation | Future of E-commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .neon-glow-indigo { box-shadow: 0 0 20px rgba(79, 70, 229, 0.4); }
+        .neon-glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        .neon-glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating { animation: float 6s ease-in-out infinite; }
+
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #4f46e5;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: difference;
+            transition: transform 0.1s ease-out;
+        }
+
+        @keyframes checkmark {
+            0% { stroke-dashoffset: 100; opacity: 0; }
+            50% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 1; }
+        }
+
+        .checkmark-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: checkmark 0.6s ease-out forwards;
+        }
+
+        .step-pill {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-active {
+            background: linear-gradient(90deg, #4f46e5, #a855f7);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+            transform: scale(1.1);
+        }
+
+        .typing-text::after {
+            content: '|';
+            animation: blink 0.7s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+    </style>
+</head>
+<body class="grid-bg min-h-screen flex items-center justify-center p-4">
+
+    <div id="cursor" class="custom-cursor"></div>
+
+    <div class="max-w-6xl w-full relative">
+        <div class="absolute -top-20 -left-20 w-64 h-64 bg-indigo-600 rounded-full blur-[120px] opacity-20 floating"></div>
+        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-purple-600 rounded-full blur-[120px] opacity-20 floating" style="animation-delay: -3s"></div>
+
+        <div class="text-center mb-16">
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">
+                OrderAutomation.io
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl font-light">Next-Gen E-commerce Order Syncing Ecosystem</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8">
+                <div class="flex flex-col space-y-6">
+                    <div id="step1" class="step-pill glass p-6 rounded-2xl flex items-center space-x-4 opacity-50">
+                        <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xl border border-indigo-500/30">1</div>
+                        <div>
+                            <h3 class="font-semibold text-white">Customer Checkout</h3>
+                            <p class="text-sm text-gray-400">User fills a stunning, responsive order form.</p>
+                        </div>
+                    </div>
+                    <div id="step2" class="step-pill glass p-6 rounded-2xl flex items-center space-x-4 opacity-50">
+                        <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xl border border-purple-500/30">2</div>
+                        <div>
+                            <h3 class="font-semibold text-white">Instant Auto-Sync</h3>
+                            <p class="text-sm text-gray-400">Real-time pipeline push to Google Sheets API.</p>
+                        </div>
+                    </div>
+                    <div id="step3" class="step-pill glass p-6 rounded-2xl flex items-center space-x-4 opacity-50">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-xl border border-cyan-500/30">3</div>
+                        <div>
+                            <h3 class="font-semibold text-white">Courier Ready</h3>
+                            <p class="text-sm text-gray-400">Bulk export ready for logistics fulfillment.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="startBtn" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-500 transition-all duration-300 transform hover:scale-105 active:scale-95 neon-glow-indigo flex items-center justify-center space-x-2">
+                        <span>▶ Play Video & Audio</span>
+                    </button>
+                    <button id="replayBtn" class="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-indigo-400 hover:text-white transition-all duration-300 transform hover:scale-105 active:scale-95 neon-glow-indigo">
+                        Replay Animation ⟳
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="glass rounded-3xl p-1 overflow-hidden neon-glow-purple">
+                    <div class="bg-gray-900 rounded-3xl p-6 relative overflow-hidden">
+                        <div class="flex items-center space-x-2 mb-6">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <div class="flex-1 mx-4 h-6 bg-gray-800 rounded-full text-[10px] flex items-center justify-center text-gray-500">
+                                https://order-automation-m4y5.onrender.com
+                            </div>
+                        </div>
+
+                        <div id="formUI" class="space-y-4 opacity-100 transition-opacity duration-500">
+                            <div class="space-y-2">
+                                <label class="text-xs text-gray-500 block">আপনার নাম</label>
+                                <div class="h-10 bg-gray-800 rounded-lg border border-gray-700 px-3 flex items-center text-sm text-indigo-300" id="field-name"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs text-gray-500 block">মোবাইল নম্বর</label>
+                                <div class="h-10 bg-gray-800 rounded-lg border border-gray-700 px-3 flex items-center text-sm text-indigo-300" id="field-phone"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs text-gray-500 block">প্রোডাক্ট সিলেক্ট করুন</label>
+                                <div class="h-10 bg-gray-800 rounded-lg border border-gray-700 px-3 flex items-center text-sm text-indigo-300" id="field-product"></div>
+                            </div>
+                            <button id="simBtn" class="w-full py-3 bg-indigo-600 rounded-lg text-white font-semibold text-sm transition-all duration-300">
+                                অর্ডার নিশ্চিত করুন
+                            </button>
+                        </div>
+
+                        <div id="successUI" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500">
+                            <svg class="w-20 h-20 text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path class="checkmark-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <h2 class="text-2xl font-bold text-white">Order Success!</h2>
+                            <p class="text-gray-400">Synced to Google Sheets</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const replayBtn = document.getElementById('replayBtn');
+        const startBtn = document.getElementById('startBtn');
+
+        const steps = {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3')
+        };
+
+        const fields = {
+            name: { el: document.getElementById('field-name'), text: 'রাফসান আহমেদ' },
+            phone: { el: document.getElementById('field-phone'), text: '01712345678' },
+            product: { el: document.getElementById('field-product'), text: 'Premium Casual Shirt - ৳1200' }
+        };
+
+        const simBtn = document.getElementById('simBtn');
+        const successUI = document.getElementById('successUI');
+        const formUI = document.getElementById('formUI');
+
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'swoosh') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.4);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.1);
+                gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'click') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1200, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'ping') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+        }
+
+        async function typeEffect(element, text) {
+            element.innerHTML = '';
+            for (let char of text) {
+                element.innerHTML += `<span class="typing-text">${char}</span>`;
+                playSound('click');
+                await new Promise(r => setTimeout(r, Math.random() * 100 + 50));
+            }
+            setTimeout(() => { element.innerHTML = text; }, 500);
+        }
+
+        async function moveCursor(x, y) {
+            cursor.style.transform = `translate(${x}px, ${y}px)`;
+            playSound('swoosh');
+            await new Promise(r => setTimeout(r, 600));
+        }
+
+        function speak(text) {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                const banglaVoice = voices.find(v => v.lang.startsWith('bn'));
+
+                if (banglaVoice) {
+                    utterance.voice = banglaVoice;
+                    console.log(`Voice selected: ${banglaVoice.name}`);
+                } else {
+                    console.warn('Bangla voice not found, using system default.');
+                }
+
+                utterance.lang = 'bn-BD';
+                utterance.rate = 0.9;
+                utterance.onend = () => resolve();
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        async function runAnimation() {
+            initAudio();
+
+            Object.values(steps).forEach(s => {
+                s.classList.remove('step-active');
+                s.classList.add('opacity-50');
+            });
+            successUI.classList.add('opacity-0', 'pointer-events-none');
+            formUI.classList.remove('opacity-0');
+            Object.values(fields).forEach(f => f.el.innerHTML = '');
+
+            await speak("আপনার অনলাইন শপের অর্ডার ম্যানেজমেন্টকে করুন আরও সহজ।");
+
+            steps[1].classList.add('step-active');
+            steps[1].classList.remove('opacity-50');
+            playSound('swoosh');
+
+            await Promise.all([
+                speak("প্রথমে, আপনার কাস্টমার একটি সুন্দর এবং রেসপনসিভ ফর্ম ফিলাপ করবে।"),
+                (async () => {
+                    await moveCursor(600, 300);
+                    await typeEffect(fields.name.el, fields.name.text);
+                    await moveCursor(600, 350);
+                    await typeEffect(fields.phone.el, fields.phone.text);
+                    await moveCursor(600, 400);
+                    await typeEffect(fields.product.el, fields.product.text);
+                    await moveCursor(600, 480);
+                    simBtn.classList.add('scale-95', 'bg-indigo-800');
+                    playSound('click');
+                    await new Promise(r => setTimeout(r, 200));
+                    simBtn.classList.remove('scale-95', 'bg-indigo-800');
+                })()
+            ]);
+
+            steps[1].classList.remove('step-active');
+            steps[1].classList.add('opacity-50');
+            steps[2].classList.add('step-active');
+            steps[2].classList.remove('opacity-50');
+            playSound('swoosh');
+
+            await Promise.all([
+                speak("আর সাথে সাথে এটি আপনার গুগল শিটে অটো-সিন্ক হয়ে যাবে।"),
+                (async () => {
+                    successUI.classList.remove('opacity-0', 'pointer-events-none');
+                    formUI.classList.add('opacity-0');
+                    playSound('ping');
+                    await new Promise(r => setTimeout(r, 2000));
+                })()
+            ]);
+
+            steps[2].classList.remove('step-active');
+            steps[2].classList.add('opacity-50');
+            steps[3].classList.add('step-active');
+            steps[3].classList.remove('opacity-50');
+            playSound('swoosh');
+
+            await speak("এখন আপনার কুরিয়ার ডেলিভারির জন্য ডাটা একদম রেডি। অর্ডার অটোমেশন ব্যবহার করুন আজই।");
+        }
+
+        startBtn.addEventListener('click', runAnimation);
+        replayBtn.addEventListener('click', runAnimation);
+
+        // Pre-load voices
+        window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
