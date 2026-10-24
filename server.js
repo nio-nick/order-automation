@@ -22,6 +22,11 @@ const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY ? process.env.GOOGLE_P
 // Courier API Configuration
 const STEADFAST_API_KEY = process.env.STEADFAST_API_KEY;
 const STEADFAST_SECRET_KEY = process.env.STEADFAST_SECRET_KEY;
+const PATHAO_CLIENT_ID = process.env.PATHAO_CLIENT_ID;
+const PATHAO_CLIENT_SECRET = process.env.PATHAO_CLIENT_SECRET;
+const PATHAO_USERNAME = process.env.PATHAO_USERNAME;
+const PATHAO_PASSWORD = process.env.PATHAO_PASSWORD;
+const CARRYBEE_API_TOKEN = process.env.CARRYBEE_API_TOKEN;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -117,20 +122,18 @@ app.get('/api/dashboard/orders', isAuthenticated, async (req, res) => {
 
 app.post('/api/dashboard/approve', isAuthenticated, async (req, res) => {
     try {
-        const { id, product_name, price, delivery_charge } = req.body;
+        const { id, product_name, price, delivery_charge, courier } = req.body;
 
         let orders = JSON.parse(await fs.readFile(ORDERS_FILE, 'utf8'));
         const index = orders.findIndex(o => o.id === id);
         if (index === -1) return res.status(404).json({ success: false, message: 'Order not found' });
 
-        orders[index].product_name = product_name;
-        orders[index].price = price;
-        orders[index].delivery_charge = delivery_charge;
-        orders[index].status = 'Approved';
-
-        // Dispatch to Steadfast Courier
         let trackingCode = null;
-        if (STEADFAST_API_KEY && STEADFAST_SECRET_KEY) {
+
+        if (courier === 'steadfast') {
+            if (!STEADFAST_API_KEY || !STEADFAST_SECRET_KEY) {
+                return res.status(500).json({ success: false, message: 'Steadfast API keys are missing' });
+            }
             try {
                 const response = await axios.post('https://api.steadfast.com.bd/api/v1/create_order', {
                     api_key: STEADFAST_API_KEY,
@@ -141,18 +144,79 @@ app.post('/api/dashboard/approve', isAuthenticated, async (req, res) => {
                     parcel_details: `${product_name} - Price: ${price}`,
                     delivery_charge: delivery_charge
                 });
-
                 if (response.data && response.data.tracking_code) {
                     trackingCode = response.data.tracking_code;
+                } else {
+                    throw new Error('Courier API did not return a tracking code');
                 }
             } catch (apiError) {
                 console.error('Steadfast API Error:', apiError.message);
+                return res.status(500).json({ success: false, message: `Steadfast dispatch failed: ${apiError.message}` });
             }
+        } else if (courier === 'pathao') {
+            if (!PATHAO_CLIENT_ID || !PATHAO_CLIENT_SECRET || !PATHAO_USERNAME || !PATHAO_PASSWORD) {
+                return res.status(500).json({ success: false, message: 'Pathao API configuration is missing' });
+            }
+            try {
+                const authRes = await axios.post('https://api.pathao.com/v1/auth/login', {
+                    username: PATHAO_USERNAME,
+                    password: PATHAO_PASSWORD
+                });
+                const token = authRes.data.token;
+
+                const orderRes = await axios.post('https://api.pathao.com/v1/orders', {
+                    recipient_name: orders[index].customer_name,
+                    recipient_phone: orders[index].phone,
+                    recipient_address: orders[index].address,
+                    parcel_details: `${product_name} - Price: ${price}`,
+                    delivery_charge: delivery_charge
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (orderRes.data && orderRes.data.order_id) {
+                    trackingCode = orderRes.data.order_id;
+                } else {
+                    throw new Error('Courier API did not return a tracking code');
+                }
+            } catch (apiError) {
+                console.error('Pathao API Error:', apiError.message);
+                return res.status(500).json({ success: false, message: `Pathao dispatch failed: ${apiError.message}` });
+            }
+        } else if (courier === 'carrybee') {
+            if (!CARRYBEE_API_TOKEN) {
+                return res.status(500).json({ success: false, message: 'Carrybee API token is missing' });
+            }
+            try {
+                const response = await axios.post('https://api.carrybee.com/v1/create_order', {
+                    token: CARRYBEE_API_TOKEN,
+                    customer_name: orders[index].customer_name,
+                    customer_phone: orders[index].phone,
+                    customer_address: orders[index].address,
+                    item_details: `${product_name} - Price: ${price}`,
+                    delivery_fee: delivery_charge
+                });
+                if (response.data && response.data.tracking_number) {
+                    trackingCode = response.data.tracking_number;
+                } else {
+                    throw new Error('Courier API did not return a tracking code');
+                }
+            } catch (apiError) {
+                console.error('Carrybee API Error:', apiError.message);
+                return res.status(500).json({ success: false, message: `Carrybee dispatch failed: ${apiError.message}` });
+            }
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid courier selected' });
         }
 
+        // Only set to Approved if we got a tracking code
+        orders[index].product_name = product_name;
+        orders[index].price = price;
+        orders[index].delivery_charge = delivery_charge;
+        orders[index].status = 'Approved';
+        orders[index].courier = courier;
         orders[index].tracking_code = trackingCode;
-        await fs.writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2));
 
+        await fs.writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2));
         res.json({ success: true, tracking_code: trackingCode });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });

@@ -126,8 +126,8 @@
             let html = `
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Pending Orders</h2>
-                        <p class="text-slate-500 text-sm">Manage and approve customer requests</p>
+                        <h2 class="text-2xl font-bold text-slate-900">Order Management</h2>
+                        <p class="text-slate-500 text-sm">Full overview of customer orders and dispatch status</p>
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -135,9 +135,10 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Selection</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer & Status</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Courier & Tracking</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Financials</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
                                 </tr>
@@ -145,14 +146,17 @@
                             <tbody class="divide-y divide-slate-100">`;
 
             if (data.orders.length === 0) {
-                html += `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400">No pending orders found.</td></tr>`;
+                html += `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No orders found.</td></tr>`;
             } else {
                 data.orders.forEach(order => {
+                    const statusColor = order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : (order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+
                     html += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-900">${order.customer_name}</div>
-                            <div class="text-xs text-slate-500">${order.phone}</div>
+                            <div class="text-xs text-slate-500 mb-2">${order.phone}</div>
+                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${statusColor}">${order.status}</span>
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
                             ${order.address}
@@ -164,12 +168,24 @@
                             </select>
                         </td>
                         <td class="px-6 py-4">
+                            <div class="flex flex-col gap-2">
+                                <select id="courier_${order.id}" class="block w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none bg-white">
+                                    <option value="steadfast">Steadfast</option>
+                                    <option value="pathao">Pathao</option>
+                                    <option value="carrybee">Carrybee</option>
+                                </select>
+                                <div class="text-[10px] font-mono text-slate-400 truncate">
+                                    ${order.tracking_code ? 'ID: ' + order.tracking_code : 'No tracking code'}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                <div class="w-24">
+                                <div class="w-20">
                                     <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
                                     <input type="number" id="price_${order.id}" value="${order.price || ''}" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
                                 </div>
-                                <div class="w-24">
+                                <div class="w-20">
                                     <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Delivery</label>
                                     <input type="number" id="delivery_${order.id}" value="0" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
                                 </div>
@@ -191,6 +207,7 @@
         async function approveOrder(id) {
             const productVal = document.getElementById('prod_' + id).value;
             if (!productVal) return alert('Please select a product');
+            const courier = document.getElementById('courier_' + id).value;
             const [product_name, price] = productVal.split('|');
             const delivery_charge = document.getElementById('delivery_' + id).value;
 
@@ -198,11 +215,12 @@
                 id,
                 product_name,
                 price,
-                delivery_charge
+                delivery_charge,
+                courier
             });
 
             if (res.success) {
-                alert('Order approved and dispatched!');
+                alert('Order approved and dispatched via ' + courier + '!');
                 loadOrders();
             } else {
                 alert('Error: ' + res.message);
