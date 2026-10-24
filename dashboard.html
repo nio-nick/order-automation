@@ -3,45 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merchant Dashboard</title>
+    <title>Merchant Dashboard | Order Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4f46e5;
-            --bg: #f3f4f6;
-            --card: #ffffff;
-            --text: #111827;
-            --border: #d1d5db;
-        }
-        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1, h2 { color: var(--text); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; border: 1px solid var(--border); text-align: left; }
-        th { background: #f9fafb; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; }
-        input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        button { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-        button:hover { opacity: 0.9; }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-approved { color: green; font-weight: bold; }
-        .nav { margin-bottom: 20px; display: flex; gap: 10px; }
-        .nav a { text-decoration: none; color: var(--primary); font-weight: 600; }
+        body { font-family: 'Inter', sans-serif; }
+        [v-cloak] { display: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="nav">
-            <a href="/dashboard">Orders</a>
-            <a href="/dashboard/products">Products</a>
-            <a href="/logout">Logout</a>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight text-slate-900">Order<span class="text-indigo-600">Flow</span></span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <nav class="hidden md:flex items-center gap-1 mr-4">
+                        <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-100" id="nav-orders">Orders</a>
+                        <a href="/dashboard/products" class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-100" id="nav-products">Products</a>
+                    </nav>
+                    <a href="/logout" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 border border-slate-200 hover:border-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stat Cards Section -->
+        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Dynamic Stats go here -->
         </div>
 
-        <div id="mainContent">
-            <!-- Content loaded via JS -->
+        <!-- Content Area -->
+        <div id="mainContent" class="space-y-6">
+            <!-- Dynamic Content loads here -->
+            <div class="flex justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script>
         async function api(method, endpoint, body = null) {
@@ -57,44 +74,117 @@
             return res.json();
         }
 
+        function updateNav() {
+            const path = window.location.pathname;
+            document.querySelectorAll('nav a').forEach(a => {
+                a.classList.remove('bg-indigo-50', 'text-indigo-700');
+                a.classList.add('text-slate-600');
+            });
+
+            if (path === '/dashboard' || path === '/dashboard/') {
+                const el = document.getElementById('nav-orders');
+                el.classList.add('bg-indigo-50', 'text-indigo-700');
+                el.classList.remove('text-slate-600');
+            } else if (path === '/dashboard/products') {
+                const el = document.getElementById('nav-products');
+                el.classList.add('bg-indigo-50', 'text-indigo-700');
+                el.classList.remove('text-slate-600');
+            }
+        }
+
+        async function renderStats(orders, products) {
+            const pendingCount = orders.filter(o => o.status === 'pending').length;
+            const approvedCount = orders.filter(o => o.status === 'approved').length;
+            const totalProducts = products.length;
+
+            const stats = [
+                { label: 'Pending Orders', value: pendingCount, color: 'text-amber-600', bg: 'bg-amber-50', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+                { label: 'Approved Orders', value: approvedCount, color: 'text-emerald-600', bg: 'bg-emerald-50', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                { label: 'Total Products', value: totalProducts, color: 'text-indigo-600', bg: 'bg-indigo-50', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+            ];
+
+            document.getElementById('statsContainer').innerHTML = stats.map(s => `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+                    <div class="${s.bg} ${s.color} p-3 rounded-xl">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${s.icon}"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">${s.label}</p>
+                        <p class="text-2xl font-bold text-slate-900">${s.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function loadOrders() {
             const data = await api('GET', '/api/dashboard/orders');
             const content = document.getElementById('mainContent');
             if (!data || !data.success) return;
 
-            let html = `<h2>Pending Orders</h2><div class="card"><table>
-                <thead>
-                    <tr>
-                        <th>Customer</th>
-                        <th>Phone</th>
-                        <th>Address</th>
-                        <th>Product</th>
-                        <th>Price</th>
-                        <th>Delivery</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+            await renderStats(data.orders, data.products);
 
-            data.orders.forEach(order => {
-                html += `
-                <tr>
-                    <td>${order.customer_name}</td>
-                    <td>${order.phone}</td>
-                    <td>${order.address}</td>
-                    <td>
-                        <select id="prod_${order.id}">
-                            <option value="">Select Product</option>
-                            ${data.products.map(p => `<option value="${p.name}|${p.price}" ${order.product_name === p.name ? 'selected' : ''}>${p.name} (৳${p.price})</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><input type="number" id="price_${order.id}" value="${order.price || ''}"></td>
-                    <td><input type="number" id="delivery_${order.id}" value="0"></td>
-                    <td><button onclick="approveOrder(${order.id})">Approve & Send</button></td>
-                </tr>`;
-            });
+            let html = `
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Pending Orders</h2>
+                        <p class="text-slate-500 text-sm">Manage and approve customer requests</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Selection</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Financials</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">`;
 
-            html += `</tbody></table></div>`;
+            if (data.orders.length === 0) {
+                html += `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400">No pending orders found.</td></tr>`;
+            } else {
+                data.orders.forEach(order => {
+                    html += `
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-slate-900">${order.customer_name}</div>
+                            <div class="text-xs text-slate-500">${order.phone}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
+                            ${order.address}
+                        </td>
+                        <td class="px-6 py-4">
+                            <select id="prod_${order.id}" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                                <option value="">Select Product</option>
+                                ${data.products.map(p => `<option value="${p.name}|${p.price}" ${order.product_name === p.name ? 'selected' : ''}>${p.name} (৳${p.price})</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24">
+                                    <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
+                                    <input type="number" id="price_${order.id}" value="${order.price || ''}" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div class="w-24">
+                                    <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Delivery</label>
+                                    <input type="number" id="delivery_${order.id}" value="0" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="approveOrder(${order.id})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all active:scale-95 shadow-sm shadow-indigo-200">
+                                Approve & Send
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            }
+
+            html += `</tbody></table></div></div>`;
             content.innerHTML = html;
         }
 
@@ -124,26 +214,60 @@
             const content = document.getElementById('mainContent');
             if (!data || !data.success) return;
 
-            let html = `<h2>Product Management</h2>
-            <div class="card">
-                <div class="form-group">
-                    <label>Product Name</label>
-                    <input type="text" id="p_name">
-                </div>
-                <div class="form-group">
-                    <label>Price</label>
-                    <input type="number" id="p_price">
-                </div>
-                <button onclick="saveProduct()">Add Product</button>
-            </div>
-            <div class="card">
-                <table>
-                    <thead><tr><th>Name</th><th>Price</th><th>Action</th></tr></thead>
-                    <tbody>
-                        ${data.products.map(p => `<tr><td>${p.name}</td><td>৳${p.price}</td><td><button onclick="deleteProduct('${p.id}')" style="background:red">Delete</button></td></tr>`).join('')}
-                    </tbody>
-                </table>
-            </div>`;
+            await renderStats([], data.products);
+
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
+                            <h2 class="text-xl font-bold text-slate-900 mb-4">Add New Product</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
+                                    <input type="text" id="p_name" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. Premium Widget">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Price (৳)</label>
+                                    <input type="number" id="p_price" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="0.00">
+                                </div>
+                                <button onclick="saveProduct()" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-sm shadow-indigo-200">
+                                    Add Product
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                                <h2 class="text-lg font-bold text-slate-900">Product Inventory</h2>
+                            </div>
+                            <div class="overflow-x-auto custom-scrollbar">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50">
+                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Name</th>
+                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Price</th>
+                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        ${data.products.map(p => `
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td class="px-6 py-4 font-medium text-slate-900">${p.name}</td>
+                                            <td class="px-6 py-4 text-slate-600">৳${p.price}</td>
+                                            <td class="px-6 py-4 text-right">
+                                                <button onclick="deleteProduct('${p.id}')" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-all">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>`).join('')}
+                                        ${data.products.length === 0 ? '<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400">No products found.</td></tr>' : ''}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
             content.innerHTML = html;
         }
 
@@ -169,6 +293,7 @@
         window.deleteProduct = deleteProduct;
 
         const path = window.location.pathname;
+        updateNav();
         if (path === '/dashboard' || path === '/dashboard/') loadOrders();
         else if (path === '/dashboard/products') loadProducts();
     </script>
