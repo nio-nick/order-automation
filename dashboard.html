@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merchant Dashboard | Order Automation</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%234f46e5%22><path d=%22M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -46,8 +47,23 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Error Banner -->
+        <div id="errorBanner" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-//v-4" clip-rule="evenodd" />
+                </svg>
+                <span id="errorMessage" class="text-sm font-medium">An error occurred while loading data.</span>
+            </div>
+            <button onclick="this.parentElement.classList.add('hidden')" class="text-red-400 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+
         <!-- Stat Cards Section -->
-        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div id="statsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Dynamic Stats go here -->
         </div>
 
@@ -62,16 +78,38 @@
 
     <script>
         async function api(method, endpoint, body = null) {
-            const res = await fetch(endpoint, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: body ? JSON.stringify(body) : null
-            });
-            if (res.status === 401) {
-                window.location.href = '/login';
-                return;
+            try {
+                const res = await fetch(endpoint, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: 'Server error occurred' }));
+                    throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+                }
+
+                return await res.json();
+            } catch (err) {
+                showError(err.message);
+                throw err;
             }
-            return res.json();
+        }
+
+        function showError(msg) {
+            const banner = document.getElementById('errorBanner');
+            const text = document.getElementById('errorMessage');
+            text.textContent = msg;
+            banner.classList.remove('hidden');
+            // Stop spinners
+            const spinner = document.querySelector('.animate-spin');
+            if (spinner) spinner.classList.add('hidden');
         }
 
         function updateNav() {
@@ -93,8 +131,8 @@
         }
 
         async function renderStats(orders, products) {
-            const pendingCount = orders.filter(o => o.status === 'pending').length;
-            const approvedCount = orders.filter(o => o.status === 'approved').length;
+            const pendingCount = orders.filter(o => o.status === 'Pending').length;
+            const approvedCount = orders.filter(o => o.status === 'Approved').length;
             const totalProducts = products.length;
 
             const stats = [
@@ -108,100 +146,106 @@
                     <div class="${s.bg} ${s.color} p-3 rounded-xl">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${s.icon}"></path></svg>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-slate-500">${s.label}</p>
-                        <p class="text-2xl font-bold text-slate-900">${s.value}</p>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-medium text-slate-500 truncate">${s.label}</p>
+                        <p class="text-2xl font-bold text-slate-900 truncate">${s.value}</p>
                     </div>
                 </div>
             `).join('');
         }
 
         async function loadOrders() {
-            const data = await api('GET', '/api/dashboard/orders');
-            const content = document.getElementById('mainContent');
-            if (!data || !data.success) return;
+            try {
+                const data = await api('GET', '/api/dashboard/orders');
+                if (!data) return;
 
-            await renderStats(data.orders, data.products);
+                const content = document.getElementById('mainContent');
+                if (!data.success) throw new Error(data.message || 'Failed to load orders');
 
-            let html = `
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Order Management</h2>
-                        <p class="text-slate-500 text-sm">Full overview of customer orders and dispatch status</p>
+                await renderStats(data.orders, data.products);
+
+                let html = `
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="px-1">
+                            <h2 class="text-2xl font-bold text-slate-900">Order Management</h2>
+                            <p class="text-slate-500 text-sm">Full overview of customer orders and dispatch status</p>
+                        </div>
                     </div>
-                </div>
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer & Status</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Courier & Tracking</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Financials</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">`;
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer & Status</th>
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</th>
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Courier & Tracking</th>
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Financials</th>
+                                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">`;
 
-            if (data.orders.length === 0) {
-                html += `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No orders found.</td></tr>`;
-            } else {
-                data.orders.forEach(order => {
-                    const statusColor = order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : (order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                if (data.orders.length === 0) {
+                    html += `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No orders found.</td></tr>`;
+                } else {
+                    data.orders.forEach(order => {
+                        const statusColor = order.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : (order.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
 
-                    html += `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-slate-900">${order.customer_name}</div>
-                            <div class="text-xs text-slate-500 mb-2">${order.phone}</div>
-                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${statusColor}">${order.status}</span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
-                            ${order.address}
-                        </td>
-                        <td class="px-6 py-4">
-                            <select id="prod_${order.id}" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                <option value="">Select Product</option>
-                                ${data.products.map(p => `<option value="${p.name}|${p.price}" ${order.product_name === p.name ? 'selected' : ''}>${p.name} (৳${p.price})</option>`).join('')}
-                            </select>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col gap-2">
-                                <select id="courier_${order.id}" class="block w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none bg-white">
-                                    <option value="steadfast">Steadfast</option>
-                                    <option value="pathao">Pathao</option>
-                                    <option value="carrybee">Carrybee</option>
+                        html += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900">${order.customer_name}</div>
+                                <div class="text-xs text-slate-500 mb-2">${order.phone}</div>
+                                <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${statusColor}">${order.status}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
+                                ${order.address}
+                            </td>
+                            <td class="px-6 py-4">
+                                <select id="prod_${order.id}" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                                    <option value="">Select Product</option>
+                                    ${data.products.map(p => `<option value="${p.name}|${p.price}" ${order.product_name === p.name ? 'selected' : ''}>${p.name} (৳${p.price})</option>`).join('')}
                                 </select>
-                                <div class="text-[10px] font-mono text-slate-400 truncate">
-                                    ${order.tracking_code ? 'ID: ' + order.tracking_code : 'No tracking code'}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col gap-2">
+                                    <select id="courier_${order.id}" class="block w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none bg-white">
+                                        <option value="steadfast">Steadfast</option>
+                                        <option value="pathao">Pathao</option>
+                                        <option value="carrybee">Carrybee</option>
+                                    </select>
+                                    <div class="text-[10px] font-mono text-slate-400 truncate">
+                                        ${order.tracking_code ? 'ID: ' + order.tracking_code : 'No tracking code'}
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-20">
-                                    <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
-                                    <input type="number" id="price_${order.id}" value="${order.price || ''}" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-20">
+                                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
+                                        <input type="number" id="price_${order.id}" value="${order.price || ''}" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
+                                    </div>
+                                    <div class="w-20">
+                                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Delivery</label>
+                                        <input type="number" id="delivery_${order.id}" value="0" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
+                                    </div>
                                 </div>
-                                <div class="w-20">
-                                    <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Delivery</label>
-                                    <input type="number" id="delivery_${order.id}" value="0" class="w-full px-2 py-1 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none">
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="approveOrder(${order.id})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all active:scale-95 shadow-sm shadow-indigo-200">
-                                Approve & Send
-                            </button>
-                        </td>
-                    </tr>`;
-                });
-            }
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="approveOrder(${order.id})" class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all active:scale-95 shadow-sm shadow-indigo-200">
+                                    Approve & Send
+                                </button>
+                            </td>
+                        </tr>`;
+                    });
+                }
 
-            html += `</tbody></table></div></div>`;
-            content.innerHTML = html;
+                html += `</tbody></table></div></div>`;
+                content.innerHTML = html;
+            } catch (err) {
+                console.error('loadOrders error:', err);
+            }
         }
 
         async function approveOrder(id) {
@@ -211,82 +255,91 @@
             const [product_name, price] = productVal.split('|');
             const delivery_charge = document.getElementById('delivery_' + id).value;
 
-            const res = await api('POST', '/api/dashboard/approve', {
-                id,
-                product_name,
-                price,
-                delivery_charge,
-                courier
-            });
+            try {
+                const res = await api('POST', '/api/dashboard/approve', {
+                    id,
+                    product_name,
+                    price,
+                    delivery_charge,
+                    courier
+                });
 
-            if (res.success) {
-                alert('Order approved and dispatched via ' + courier + '!');
-                loadOrders();
-            } else {
-                alert('Error: ' + res.message);
+                if (res.success) {
+                    alert('Order approved and dispatched via ' + courier + '!');
+                    loadOrders();
+                } else {
+                    alert('Error: ' + res.message);
+                }
+            } catch (err) {
+                alert('Dispatch failed: ' + err.message);
             }
         }
 
         async function loadProducts() {
-            const data = await api('GET', '/api/dashboard/products');
-            const content = document.getElementById('mainContent');
-            if (!data || !data.success) return;
+            try {
+                const data = await api('GET', '/api/dashboard/products');
+                if (!data) return;
+                const content = document.getElementById('mainContent');
+                if (!data.success) throw new Error(data.message || 'Failed to load products');
 
-            await renderStats([], data.products);
+                await renderStats([], data.products);
 
-            let html = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
-                            <h2 class="text-xl font-bold text-slate-900 mb-4">Add New Product</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
-                                    <input type="text" id="p_name" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. Premium Widget">
+                let html = `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
+                                <h2 class="text-xl font-bold text-slate-900 mb-4">Add New Product</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
+                                        <input type="text" id="p_name" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. Premium Widget">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Price (৳)</label>
+                                        <input type="number" id="p_price" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="0.00">
+                                    </div>
+                                    <button onclick="saveProduct()" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-sm shadow-indigo-200">
+                                        Add Product
+                                    </button>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Price (৳)</label>
-                                    <input type="number" id="p_price" class="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="0.00">
-                                </div>
-                                <button onclick="saveProduct()" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-sm shadow-indigo-200">
-                                    Add Product
-                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                                <h2 class="text-lg font-bold text-slate-900">Product Inventory</h2>
-                            </div>
-                            <div class="overflow-x-auto custom-scrollbar">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-50">
-                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Name</th>
-                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Price</th>
-                                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">
-                                        ${data.products.map(p => `
-                                        <tr class="hover:bg-slate-50 transition-colors">
-                                            <td class="px-6 py-4 font-medium text-slate-900">${p.name}</td>
-                                            <td class="px-6 py-4 text-slate-600">৳${p.price}</td>
-                                            <td class="px-6 py-4 text-right">
-                                                <button onclick="deleteProduct('${p.id}')" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-all">
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>`).join('')}
-                                        ${data.products.length === 0 ? '<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400">No products found.</td></tr>' : ''}
-                                    </tbody>
-                                </table>
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                                    <h2 class="text-lg font-bold text-slate-900">Product Inventory</h2>
+                                </div>
+                                <div class="overflow-x-auto custom-scrollbar">
+                                    <table class="w-full text-left border-collapse min-w-[600px]">
+                                        <thead>
+                                            <tr class="bg-slate-50">
+                                                <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Name</th>
+                                                <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Price</th>
+                                                <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            ${data.products.map(p => `
+                                            <tr class="hover:bg-slate-50 transition-colors">
+                                                <td class="px-6 py-4 font-medium text-slate-900">${p.name}</td>
+                                                <td class="px-6 py-4 text-slate-600">৳${p.price}</td>
+                                                <td class="px-6 py-4 text-right">
+                                                    <button onclick="deleteProduct('${p.id}')" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-all">
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>`).join('')}
+                                            ${data.products.length === 0 ? '<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400">No products found.</td></tr>' : ''}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>`;
-            content.innerHTML = html;
+                    </div>`;
+                content.innerHTML = html;
+            } catch (err) {
+                console.error('loadProducts error:', err);
+            }
         }
 
         async function saveProduct() {
@@ -294,16 +347,24 @@
             const price = document.getElementById('p_price').value;
             if (!name || !price) return alert('Fill all fields');
 
-            const res = await api('POST', '/api/dashboard/products', { name, price: Number(price) });
-            if (res.success) {
-                loadProducts();
+            try {
+                const res = await api('POST', '/api/dashboard/products', { name, price: Number(price) });
+                if (res.success) {
+                    loadProducts();
+                }
+            } catch (err) {
+                alert('Failed to save product: ' + err.message);
             }
         }
 
         async function deleteProduct(id) {
             if (!confirm('Delete this product?')) return;
-            const res = await api('DELETE', '/api/dashboard/products/' + id);
-            if (res.success) loadProducts();
+            try {
+                const res = await api('DELETE', '/api/dashboard/products/' + id);
+                if (res.success) loadProducts();
+            } catch (err) {
+                alert('Failed to delete product: ' + err.message);
+            }
         }
 
         window.approveOrder = approveOrder;
